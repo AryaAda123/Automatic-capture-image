@@ -3,86 +3,43 @@
 <head>
     <title>Auto-Photo to Google Sheet</title>
     <style>
-        /* Set up the overall page style */
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #000; /* Dark black background */
-            color: #fff; /* White text */
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden; /* Prevent scrolling */
+            margin: 0; padding: 0; background-color: #000; color: #fff;
+            font-family: sans-serif; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; height: 100vh;
+            overflow: hidden;
         }
-
-        /* Style the video element, remove borders */
         #video {
-            display: block;
-            max-width: 100%;
-            height: auto;
-            border: none; /* No border */
-            box-shadow: none;
-            outline: none;
-            /* This is a hack to prevent a strange video outline on some browsers */
+            display: block; max-width: 100%; height: auto; border: none;
+            box-shadow: none; outline: none;
             -webkit-mask-image: -webkit-radial-gradient(white, black);
         }
-        
-        /* Container for initial elements */
-        .container {
-            text-align: center;
-            padding: 20px;
-        }
-
-        /* Style the button */
+        .container { text-align: center; padding: 20px; }
         #startButton {
-            background-color: #337ab7;
-            color: #fff;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 20px;
+            background-color: #337ab7; color: #fff; border: none;
+            padding: 12px 24px; font-size: 16px; cursor: pointer;
+            border-radius: 5px; margin-top: 20px;
         }
-
-        #startButton:hover {
-            background-color: #286090;
-        }
-
-        /* Style the status message */
-        #status {
-            margin-top: 15px;
-            font-size: 18px;
-            color: #aaa;
-        }
-
-        /* Class to hide elements */
-        .hidden {
-            display: none;
-        }
+        #startButton:hover { background-color: #286090; }
+        #status { margin-top: 15px; font-size: 18px; color: #aaa; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
     <div class="container" id="main-container">
-        <h2>Enable Camera and Auto-Capture Photo</h2>
-        <button id="startButton">Start Camera</button>
+        <h2>कैमरा चालू करें और ऑटो-फोटो</h2>
+        <button id="startButton">कैमरा शुरू करें</button>
     </div>
 
     <video id="video" width="640" height="480" autoplay style="display:none;"></video>
-    
     <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
-
     <div id="status"></div>
 
     <script>
-        // Paste your Web app URL from Google Apps Script here.
+        // अपनी नई Google Apps Script का URL यहाँ पेस्ट करें
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbGTPMWqJdE2iVlY3tOYvfm75hGSepLI6T5WAkPCqlWdgeojQXqKnJLyBImLkkFIxbrQ/exec';
 
-        // Get the HTML elements and store them in JavaScript variables.
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const startButton = document.getElementById('startButton');
@@ -90,33 +47,25 @@
         const mainContainer = document.getElementById('main-container');
         const context = canvas.getContext('2d');
 
-        // Add an event listener to the 'Start Camera' button.
         startButton.addEventListener('click', async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                
-                // Hide the button and heading, and show the video
                 mainContainer.classList.add('hidden');
                 video.srcObject = stream;
                 video.style.display = 'block';
 
-                statusDiv.innerText = 'Camera is on. Photo will be taken automatically in 3 seconds...';
+                statusDiv.innerText = 'कैमरा चालू है। फोटो 3 सेकंड में अपने आप ली जाएगी...';
                 
-                // Set a timer to automatically capture the photo after 3 seconds
                 setTimeout(() => {
                     captureAndSendPhoto(stream);
                 }, 3000);
-
             } catch (err) {
-                statusDiv.innerText = 'Camera access denied. Please grant permission.';
-                console.error('Error accessing the camera:', err);
-                
-                // If there's an error, show the button and heading again
+                statusDiv.innerText = 'कैमरा एक्सेस नहीं मिला। कृपया अनुमति दें।';
+                console.error('कैमरा एक्सेस में एरर:', err);
                 mainContainer.classList.remove('hidden');
             }
         });
 
-        // This function captures the photo and sends it to the server.
         function captureAndSendPhoto(stream) {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const photoData = canvas.toDataURL('image/jpeg');
@@ -127,10 +76,9 @@
                 stream.getTracks().forEach(track => track.stop());
             }
 
-            statusDiv.innerText = 'Photo is being sent...';
+            statusDiv.innerText = 'फोटो भेजी जा रही है...';
         }
 
-        // This function sends the data to the Apps Script URL.
         function sendToGoogleSheet(data) {
             fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -141,12 +89,12 @@
             })
             .then(response => response.text())
             .then(result => {
-                statusDiv.innerText = 'Success! Photo has been saved to the Google Sheet.';
-                console.log('Success:', result);
+                statusDiv.innerText = 'सफलता! फोटो Google Sheet में सेव हो गई है।';
+                console.log('सफलता:', result);
             })
             .catch(error => {
-                statusDiv.innerText = 'There was an error sending the photo.';
-                console.error('Error:', error);
+                statusDiv.innerText = 'फोटो भेजने में कोई एरर हुई।';
+                console.error('त्रुटि:', error);
             });
         }
     </script>
