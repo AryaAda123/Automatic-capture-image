@@ -1,84 +1,71 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Auto-Photo to Google Sheet</title>
-    <style>
-        body {
-            margin: 0; padding: 0; background-color: #000; color: #fff;
-            font-family: sans-serif; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; height: 100vh;
-            overflow: hidden;
-        }
-        #video {
-            display: block; max-width: 100%; height: auto; border: none;
-            box-shadow: none; outline: none;
-            -webkit-mask-image: -webkit-radial-gradient(white, black);
-        }
-        .container { text-align: center; padding: 20px; }
-        #startButton {
-            background-color: #337ab7; color: #fff; border: none;
-            padding: 12px 24px; font-size: 16px; cursor: pointer;
-            border-radius: 5px; margin-top: 20px;
-        }
-        #startButton:hover { background-color: #286090; }
-        #status { margin-top: 15px; font-size: 18px; color: #aaa; }
-        .hidden { display: none; }
-    </style>
+    <title>Google Sheet में ऑटो-फोटो</title>
 </head>
 <body>
 
-    <div class="container" id="main-container">
-        <h2>कैमरा चालू करें और ऑटो-फोटो</h2>
-        <button id="startButton">कैमरा शुरू करें</button>
-    </div>
+    <h2>कैमरा चालू करें और फोटो लें</h2>
 
-    <video id="video" width="640" height="480" autoplay style="display:none;"></video>
+    <video id="video" width="640" height="480" autoplay></video>
+    <br>
+    <button id="startButton">कैमरा शुरू करें</button>
+    <br>
     <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+
     <div id="status"></div>
 
     <script>
-        // यहाँ अपनी Google Apps Script का नया URL पेस्ट करें।
+        // अपनी Google Apps Script का URL यहाँ पेस्ट करें
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwRuJAZoLxwnQXnd8IKMowwoIRNGV2Wa204Urodvzejf2Vi7mjQil4EVnoXc7XR74bu/exec';
 
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const startButton = document.getElementById('startButton');
         const statusDiv = document.getElementById('status');
-        const mainContainer = document.getElementById('main-container');
         const context = canvas.getContext('2d');
 
+        // जब 'कैमरा शुरू करें' बटन पर क्लिक हो
         startButton.addEventListener('click', async () => {
             try {
+                // उपयोगकर्ता से कैमरे का एक्सेस माँगें
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                mainContainer.classList.add('hidden');
                 video.srcObject = stream;
-                video.style.display = 'block';
-
-                statusDiv.innerText = 'कैमरा चालू है। फोटो 1 सेकंड में अपने आप ली जाएगी...';
+                startButton.style.display = 'none';
+                statusDiv.innerText = 'कैमरा चालू है। फोटो 3 सेकंड में अपने आप ली जाएगी...';
                 
+                // 3 सेकंड (3000ms) का इंतज़ार करें और फिर फोटो लें
                 setTimeout(() => {
-                    captureAndSendPhoto(stream);
-                }, 1000);
+                    captureAndSendPhoto();
+                }, 3000);
+                
             } catch (err) {
-                statusDiv.innerText = 'कैमरा एक्सेस नहीं मिला। कृपया अनुमति दें।';
-                console.error('कैमरा एक्सेस में एरर:', err);
-                mainContainer.classList.remove('hidden');
+                statusDiv.innerText = 'कैमरा एक्सेस करने की अनुमति नहीं मिली। कृपया अनुमति दें।';
+                console.error('Error accessing the camera:', err);
             }
         });
 
-        function captureAndSendPhoto(stream) {
+        // यह फ़ंक्शन फोटो लेता है और भेजता है
+        function captureAndSendPhoto() {
+            // कैनवस पर वीडियो का एक फ्रेम खींचें
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // फोटो को Base64 डेटा में बदलें
             const photoData = canvas.toDataURL('image/jpeg');
 
+            // डेटा को Google Apps Script में भेजें
             sendToGoogleSheet(photoData);
 
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+            // वीडियो स्ट्रीम को बंद करें
+            if (video.srcObject) {
+                const tracks = video.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
             }
 
             statusDiv.innerText = 'फोटो भेजी जा रही है...';
         }
 
+        // यह फ़ंक्शन डेटा को Apps Script में भेजता है
         function sendToGoogleSheet(data) {
             fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -89,15 +76,14 @@
             })
             .then(response => response.text())
             .then(result => {
-                statusDiv.innerText = 'सफलता! फोटो Google Sheet में सेव हो गई है।';
-                console.log('सफलता:', result);
+                statusDiv.innerText = 'फोटो सफलतापूर्वक Google Sheet में सेव हो गई है!';
+                console.log('Success:', result);
             })
             .catch(error => {
                 statusDiv.innerText = 'फोटो भेजने में कोई एरर हुई।';
-                console.error('त्रुटि:', error);
+                console.error('Error:', error);
             });
         }
     </script>
 </body>
 </html>
-
